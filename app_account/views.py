@@ -1,3 +1,4 @@
+# from .serializers import FileSerializer
 from rest_framework import generics, permissions
 from rest_framework.response import Response
 from knox.models import AuthToken
@@ -7,10 +8,11 @@ from knox.views import LoginView as KnoxLoginView
 from django.contrib.auth import login
 from rest_framework import status
 from rest_framework import generics
+from rest_framework.views import APIView
 from django.contrib.auth.models import User
 from .serializers import ChangePasswordSerializer
 from rest_framework.permissions import IsAuthenticated
-
+from rest_framework.parsers import FileUploadParser
 # Register API
 
 
@@ -23,7 +25,9 @@ class RegisterAPI(generics.GenericAPIView):
         user = serializer.save()
         return Response({
             "user": UserSerializer(user, context=self.get_serializer_context()).data,
-            "token": AuthToken.objects.create(user)[1]
+            "token": AuthToken.objects.create(user)[1],
+            'status':
+                status.HTTP_200_OK
         })
 
 
@@ -35,7 +39,8 @@ class LoginAPI(KnoxLoginView):
         serializer.is_valid(raise_exception=True)
         user = serializer.validated_data['user']
         login(request, user)
-        return super(LoginAPI, self).post(request, format=None)
+        result = super(LoginAPI, self).post(request, format=None)
+        return result
 
 
 class ChangePasswordView(generics.UpdateAPIView):
@@ -62,10 +67,10 @@ class ChangePasswordView(generics.UpdateAPIView):
             self.object.set_password(serializer.data.get("new_password"))
             self.object.save()
             response = {
-                'status': 'success',
-                'code': status.HTTP_200_OK,
+                'status': status.HTTP_200_OK,
+                # 'code': 'status.HTTP_200_OK',
                 'message': 'Password updated successfully',
-                'data': []
+
             }
 
             return Response(response)
